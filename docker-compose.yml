@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  wireguard:
+    image: linuxserver/wireguard
+    container_name: wireguard_vpn
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Stockholm
+      - SERVERURL=${SERVERURL}
+      - SERVERPORT=${SERVERPORT}
+      - PEERS=${PEERS}
+      - PEERDNS=8.8.8.8
+      - INTERNAL_SUBNET=${VPN_SUBNET}
+    volumes:
+      - ./wireguard:/config
+      - ./wireguard/wg0.conf:/config/wg0.conf:ro
+    ports:
+      - "${SERVERPORT}:${SERVERPORT}/udp"
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+    networks:
+      - mitmproxy-network
+
+  mitmproxy:
+    image: mitmproxy/mitmproxy
+    container_name: mitmproxy
+    depends_on:
+      - wireguard
+    command: >
+      mitmdump --mode transparent --showhost --listen-host 0.0.0.0 --listen-port ${MITMPROXY_PORT}
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    networks:
+      - mitmproxy-network
+    ports:
+      - "${MITMPROXY_PORT}:${MITMPROXY_PORT}"
+      - "${MITMPROXY_DASHBOARD_PORT}:8081"
+
+networks:
+  mitmproxy-network:
+    driver: bridge

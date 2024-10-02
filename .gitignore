@@ -1,0 +1,16 @@
+# Ignore environment files
+.env
+
+# Ignore Docker Compose overrides and logs
+docker-compose.override.yml
+*.log
+
+# Ignore WireGuard configuration and keys
+wireguard/                  # Ignore all generated WireGuard configuration files
+
+# macOS system files
+.DS_Store
+
+# Temporary files
+*.tmp
+*.swp
